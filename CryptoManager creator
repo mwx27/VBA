@@ -1,0 +1,820 @@
+'
+Sub inicjalizacja_podstawowa()
+
+'tworzenie i nazywanie arkuszy
+Set SD = ActiveWorkbook.Worksheets(1)
+Set SK = ActiveWorkbook.Sheets.Add(before:=SD)
+Set ST = ActiveWorkbook.Worksheets.Add(before:=SK)
+Set SR = ActiveWorkbook.Worksheets.Add(before:=ST)
+SD.Name = SDn
+SK.Name = SKn
+ST.Name = STn
+SR.Name = SRn
+
+With ActiveWindow
+    SD.Activate
+    .DisplayGridlines = False
+    SK.Activate
+    .DisplayGridlines = False
+    SR.Activate
+    .DisplayGridlines = False
+    ST.Activate
+    .DisplayGridlines = False
+    '.SplitColumn = 2
+    .SplitRow = 2
+    .FreezePanes = True
+End With
+
+'Application.DisplayAlerts = False
+Application.ScreenUpdating = False
+
+'dodawanie listy filtrowanej na potrzeby ComboBoxa znajdującego kursy
+ActiveWorkbook.Names.Add Name:="Lista_Filtrowana1", RefersTo:="=OFFSET(" & SDn & "!$D$1,0,0,MAX(" & SDn & "!$C:$C),1)"
+
+'wywoływanie procedur dodających kształty
+Call kreator_kształtów_transakcje
+Call kreator_kształtów_kursy
+Call kreator_kształtów_raport
+
+'wywoływanie procedur nadających wygląd i treści arkuszom oraz konfigurujących kształty
+Call karta_transakcje
+Call karta_kursy
+Call karta_dane
+Call karta_raport
+
+'chowanie karty dane
+'SD.Visible = Visible 'xlSheetVeryHidden
+
+'Application.DisplayAlerts = True
+Application.ScreenUpdating = True
+
+MsgBox "Już prawie możesz korzystać z CryptoManagera :)" & vbCr & vbCr & "Teraz tak na prawdę potrzebujesz tylko pobrać aktualny zestaw danych z Coinpapriki (zakładka kursy)." & vbCr & vbCr & _
+       "Możesz też skorzystać z przykładowego zestawu transakcji, aby lepiej poznać możliwości arkusza, zanim zapełnisz je swoimi." & vbCr & vbCr & _
+       "Abyś mógł lepiej się odnaleźć, przygotowałem dla Ciebie krótką instrukcję obsługi", , "Prawie gotowe... "
+
+End Sub
+
+Sub karta_transakcje()
+
+Set ST = ActiveWorkbook.Worksheets(STn)
+
+With ST
+
+    'kształty
+    T = 3 'top
+    o = 4 'offset
+    L = 10 'left
+    h = 22 'heigth
+    w = 82 'width
+    
+    'zablokowanie pozycji wszystkich kształtów
+    For Each Object In .Shapes
+        Object.Placement = xlFreeFloating
+    Next
+    
+    'heigth
+    .Shapes.Range(Array("CheckBox1", "CheckBox2")).Height = h - 4
+
+    'width
+    .Shapes.Range(Array("CheckBox1")).Width = w * 1.3
+    .Shapes.Range(Array("CheckBox2")).Width = w * 0.8
+
+    'top
+    .Shapes.Range(Array("CheckBox1", "CheckBox2")).Top = T * 2
+    
+    'left
+    .Shapes("CommandButton1").Left = L
+    .Shapes("CommandButton2").Left = L + h + o
+    .Shapes("CommandButton3").Left = L + 2 * h + 2 * o
+    .Shapes("CommandButton4").Left = L + 2 * h + 3 * o + w
+    .Shapes("CommandButton5").Left = L + 2 * h + 4 * o + 2 * w
+    .Shapes("CheckBox1").Left = L + 2 * h + 5 * o + 3 * w
+    .Shapes("CheckBox2").Left = L + 2 * h + 6 * o + 4.3 * w
+    .Shapes("CommandButton6").Left = L + 2 * h + 7 * o + 5.1 * w
+    .Shapes("CommandButton7").Left = L + 2 * h + 8 * o + 6.1 * w
+    .Shapes("CommandButton8").Left = L + 2 * h + 9 * o + 7.1 * w
+    .Shapes("CommandButton9").Left = L + 2 * h + 10 * o + 8.1 * w
+
+    'treść i działanie przycisków i CheckBoxów
+    For i = 1 To 9
+        .OLEObjects("CommandButton" & i).Object.Caption = Switch(i = 1, "+", i = 2, "-", i = 3, "Odśwież ceny", i = 4, "Podziel pozycję", i = 5, "Popraw wygląd", i = 6, "Poznaj mnie!", i = 7, "$ wesprzyj $", i = 8, "Reflinki", i = 9, "Zostań bohaterem!")
+        .OLEObjects("CommandButton" & i).Object.BackColor = Switch(i = 1, Kolor_jasnożółty, i = 2, Kolor_jasnożółty, i = 3, Kolor_jasnożółty, i = 4, Kolor_jasnożółty, i = 5, Kolor_jasnożółty, i = 6, Kolor_zielony, i = 7, Kolor_zielony, i = 8, Kolor_zielony, i = 9, Kolor_zielony)
+        .OLEObjects("CommandButton" & i).Object.ForeColor = Switch(i = 1, Kolor_zielony, i = 2, Kolor_zielony, i = 3, Kolor_zielony, i = 4, Kolor_zielony, i = 5, Kolor_zielony, i = 6, Kolor_ciemnożółty, i = 7, Kolor_ciemnożółty, i = 8, Kolor_ciemnożółty, i = 9, Kolor_ciemnożółty)
+        .OLEObjects("CommandButton" & i).Object.Font.Bold = True
+        .OLEObjects("CommandButton" & i).Width = Switch(i = 1, h, i = 2, h, i = 3, w, i = 4, w, i = 5, w, i = 6, w, i = 7, w, i = 8, w, i = 9, w * 1.25)
+        .OLEObjects("CommandButton" & i).Height = h
+        .OLEObjects("CommandButton" & i).Top = T
+        .OLEObjects("CommandButton" & i).Visible = Switch(i = 1, True, i = 2, True, i = 3, True, i = 4, True, i = 5, True, i = 6, False, i = 7, False, i = 8, False, i = 9, False)
+    Next
+    
+    .OLEObjects("CheckBox1").Object.Caption = "Pozycje zamknięte"
+    .OLEObjects("CheckBox1").Object.Value = True
+    .OLEObjects("CheckBox2").Object.Caption = "Instrukcja"
+    .OLEObjects("CheckBox2").Object.Value = True
+    
+    
+    'nazwy i szerokości kolumn
+    For i = 0 To 16
+        .Cells(R - 1, C + i).Value = Switch(i = 0, "LP", i = 1, "Miejsce" & Chr(10) & "transakcji", i = 2, "Waluta" & Chr(10) & "pozycji", i = 3, "Waluta" & Chr(10) & "bazowa", i = 4, "Wolumen" & Chr(10) & "pozycji", i = 5, "Wolumen waluty" & Chr(10) & "bazowej", _
+                                            i = 6, "Cena" & Chr(10) & "otwarcia", i = 7, "Data" & Chr(10) & "otwarcia", i = 8, "Data" & Chr(10) & "zamknięcia", i = 9, "Cena" & Chr(10) & "zamknięcia", i = 10, "Wolumen" & Chr(10) & "pozycji", _
+                                            i = 11, "Wolumen waluty" & Chr(10) & "bazowej", i = 12, "Wolumen" & Chr(10) & "w $", i = 13, "Różnica" & Chr(10) & "bazowa", i = 14, "Różnica" & Chr(10) & "w %", i = 15, "Różnica" & Chr(10) & "w $", i = 16, "Komentarz")
+        
+        .Columns(C + i).ColumnWidth = Switch(i = 0, 5, i = 1, 15, i = 2, 12, i = 3, 13, i = 4, 12, i = 5, 16, i = 6, 14, i = 7, 13.5, i = 8, 15, i = 9, 15, i = 10, 14, _
+                                             i = 11, 16, i = 12, 13, i = 13, 11.5, i = 14, 11, i = 15, 11, i = 16, 50)
+    Next
+
+    'estetyka wiersza nagłówkowego
+    With Rows(R - 1)
+        .HorizontalAlignment = xlCenter
+        .VerticalAlignment = xlCenter
+        .WrapText = True
+    End With
+    .Rows(1).RowHeight = 30
+    .Rows(2).RowHeight = 30
+    .Columns(1).ColumnWidth = 0.5
+    
+        
+    'pierwszy wiersz + filtr tabeli
+    Call Wstaw
+    Rows(R).HorizontalAlignment = xlCenter
+    .Cells(R, C).AutoFilter
+    
+    'obramowanie
+    Range(.Cells(R - 1, C + 0), .Cells(R, C + 16)).Borders.LineStyle = xlContinuous 'obramowanie podstawowe
+    Range(.Cells(R - 1, C + 0), .Cells(R, C + 16)).Borders.Weight = xlMedium 'xlContinuous 'obramowanie podstawowe
+    Range(.Cells(R - 1, C + 0), .Cells(R, C + 3)).Borders(xlInsideHorizontal).Weight = xlThin
+    Range(.Cells(R - 1, C + 4), .Cells(R, C + 6)).Borders(xlInsideHorizontal).Weight = xlThin
+    Range(.Cells(R - 1, C + 7), .Cells(R, C + 8)).Borders(xlInsideHorizontal).Weight = xlThin
+    Range(.Cells(R - 1, C + 9), .Cells(R, C + 11)).Borders(xlInsideHorizontal).Weight = xlThin
+    Range(.Cells(R - 1, C + 12), .Cells(R, C + 16)).Borders(xlInsideHorizontal).Weight = xlThin
+    Range(.Cells(R - 1, C + 0), .Cells(R, C + 3)).Borders(xlInsideVertical).Weight = xlThin
+    Range(.Cells(R - 1, C + 4), .Cells(R, C + 6)).Borders(xlInsideVertical).Weight = xlThin
+    Range(.Cells(R - 1, C + 7), .Cells(R, C + 8)).Borders(xlInsideVertical).Weight = xlThin
+    Range(.Cells(R - 1, C + 9), .Cells(R, C + 11)).Borders(xlInsideVertical).Weight = xlThin
+    Range(.Cells(R - 1, C + 12), .Cells(R, C + 16)).Borders(xlInsideVertical).Weight = xlThin
+    Union(Range(.Cells(R - 1, C + 0), .Cells(R, C + 3)), Range(.Cells(R - 1, C + 4), .Cells(R, C + 6)), _
+          Range(.Cells(R - 1, C + 7), .Cells(R, C + 8))).Borders(xlInsideVertical).Weight = xlThin
+    Range(.Cells(R - 1, C + 0), .Cells(R, C + 16)).Borders.LineStyle = xlContinuous
+    Range(.Cells(R - 1, C + 0), .Cells(R - 1, C + 16)).Offset(1, 0).Interior.Color = 15652797
+    Union(.Cells(R, C), .Cells(R, C + 6), .Cells(R, C + 9)).Interior.Color = 14277081
+    
+End With
+
+
+'wywołanie procedury ustawiającej fotmatowanie warunkowe
+Call formatowanie_warunkowe
+
+'wywołanie procedury wstawiającej makra do tego arkusza
+Call kreator_kodu_sht_transakcje
+
+'wywołanie procedury wstawiającej instrukcję do tego arkusza
+Call kreator_instrukcji_transakcje
+
+End Sub
+
+Sub karta_kursy()
+
+Set SK = ActiveWorkbook.Worksheets(SKn)
+
+With SK
+    
+    'wstawianie wartości tekstowych w komórki i estetyka
+    .Range("B1").Value = "Cena USD"
+    .Range("C1").Value = "Cena BTC"
+    .Range("E1").Value = "Czas"
+    .Range("E2").Value = "dd/mm/yyyy  hh:mm:ss"
+    .Range("F1").Value = "Wyszukiwarka coinów"
+    .Columns("A:F").AutoFit
+    .Columns("A:F").HorizontalAlignment = xlCenter
+        
+    'parametry rozmieszczenia
+    T = 40 'top
+    o = 5 'offset
+    L1 = .Columns("E").Left 'left
+    L2 = .Columns("F").Left 'left
+    h = 25 'heigth
+    w = .Columns("E").Width - o 'width
+    
+
+
+    'treść i działanie przycisków i CheckBoxów
+    For i = 1 To 4
+        .OLEObjects("CommandButton" & i).Object.Caption = Switch(i = 1, "Odśwież wszystko", i = 2, "Odśwież wybrane", i = 3, "Dodaj walutę", i = 4, "Pobierz nowe dane")
+        .OLEObjects("CommandButton" & i).Object.BackColor = Switch(i = 1, Kolor_ciemnożółty, i = 2, Kolor_ciemnożółty, i = 3, Kolor_ciemnożółty, i = 4, Kolor_ciemnożółty, i = 5, Kolor_ciemnożółty, i = 6, Kolor_zielony, i = 7, Kolor_zielony, i = 8, Kolor_zielony, i = 9, Kolor_zielony)
+        .OLEObjects("CommandButton" & i).Object.ForeColor = Switch(i = 1, Kolor_zielony, i = 2, Kolor_zielony, i = 3, Kolor_zielony, i = 4, Kolor_zielony, i = 5, Kolor_zielony, i = 6, Kolor_ciemnożółty, i = 7, Kolor_ciemnożółty, i = 8, Kolor_ciemnożółty, i = 9, Kolor_ciemnożółty)
+        .OLEObjects("CommandButton" & i).Object.Font.Bold = True
+        .OLEObjects("CommandButton" & i).Width = w
+        .OLEObjects("CommandButton" & i).Height = h
+        .OLEObjects("CommandButton" & i).Top = Switch(i = 1, T, i = 2, T + h + o, i = 3, T, i = 4, T + h + o)
+        .OLEObjects("CommandButton" & i).Left = Switch(i = 1, L1, i = 2, L1, i = 3, L1 + o + w, i = 4, L1 + o + w)
+        .OLEObjects("CommandButton" & i).Placement = xlMove
+        .Range("A" & i).Value = Switch(i = 1, "Waluta", i = 2, "btc-bitcoin", i = 3, "eth-ethereum", i = 4, "bnb-binance-coin")
+    Next
+    
+    
+    'konfiguracja checkboxu
+    .OLEObjects("CheckBox1").Object.Caption = "Instrukcja"
+    .OLEObjects("CheckBox1").Object.Value = True
+    With .Shapes("CheckBox1")
+        .Height = h
+        .Width = w
+        .Top = T + 2 * h + 2 * o
+        .Left = L1
+        .Placement = xlMove
+    End With
+    
+    'konfiguracja comboboxu
+    .OLEObjects("ComboBox1").LinkedCell = "F2"
+    .OLEObjects("ComboBox1").ListFillRange = "Lista_Filtrowana1"
+    .OLEObjects("ComboBox1").Object.MatchEntry = 2
+    With .Shapes("ComboBox1")
+        .Height = h * 0.75
+        .Width = w * 1.5
+        .Top = T - h * 0.75 - o
+        .Left = L2
+        .Placement = xlMove
+    End With
+    
+    .Columns("A:F").AutoFit
+    
+End With
+
+'wywołanie procedury ustawiającej formatowanie warunkowe
+Call formatowanie_warunkowe
+
+'wywołanie procedury wstawiającej makra do tego arkusza
+Call kreator_kodu_sht_kursy
+
+'wywołanie procedury wstawiającej instrukcję do tego arkusza
+Call kreator_instrukcji_kursy
+End Sub
+
+
+
+Sub kreator_instrukcji_kursy()
+
+'ustalanie tekstów instrukcji do Labeli
+Dim X(1 To 5) As String
+X(1) = "Wpisz walutę jaką chcesz dodać, a następnie kliknij przycisk " & Chr(34) & "Dodaj walutę" & Chr(34)
+X(2) = "Jeżeli nie ma tu Twojej waluty, sprawdź czy znajduje się na www.coinpaprika.com" & Chr(10) & "Kliknij, aby otworzyć"
+X(3) = "Jeżeli jest, to pobierz świeże dane i spróbuj ponownie"
+X(4) = "Pojawi się nowy arkusz z wszystkimi walutami na coinpaprice"
+X(5) = "Może się zdarzyć, że API nie odpowie na któreś z zapytań. Możesz wtedy odświeżyć jedynie zaznaczone coiny"
+
+Set SK = ActiveWorkbook.Worksheets(SKn)
+ 
+With SK
+    
+    'parametry rozmieszczenia
+    L1 = .Range("I1").Left
+    L2 = .OLEObjects("CommandButton4").Left
+    L3 = .OLEObjects("CommandButton2").Left
+    w = 145
+    o = 8
+    h = 45
+    'usuwanie starych strzałek
+    For i = .Shapes.Count To 1 Step -1
+        If .Shapes.Item(i).Connector Then .Shapes.Item(i).Delete
+    Next
+    
+
+        
+    'konfiguracja etykiet i strzałek
+    For i = 1 To 5
+        
+        'etykiety
+        .OLEObjects("Label" & i).Object.AutoSize = False
+        .OLEObjects("Label" & i).Object.BorderStyle = 1
+        .OLEObjects("Label" & i).Object.BorderColor = Kolor_zielony
+        .OLEObjects("Label" & i).Object.BackColor = Kolor_jasnożółty
+        .OLEObjects("Label" & i).Object.ForeColor = Kolor_zielony
+        .OLEObjects("Label" & i).Object.Font.Bold = True
+        .OLEObjects("Label" & i).Left = Switch(i = 1, L1, i = 2, L1, i = 3, L1, i = 4, L2, i = 5, L3)
+        .OLEObjects("Label" & i).Top = Switch(i = 1, 50, i = 2, 120, i = 3, 200, i = 4, 160, i = 5, 230)
+        .OLEObjects("Label" & i).Height = Switch(i = 1, h, i = 2, 1.3 * h, i = 3, 30, i = 4, 45, i = 5, 60)
+        .OLEObjects("Label" & i).Width = Switch(i = 1, w, i = 2, w, i = 3, w, i = 4, .OLEObjects("CommandButton4").Width, i = 5, w)
+        .OLEObjects("Label" & i).Object.Caption = X(i)
+
+        
+        'strzałki
+        If i = 1 Then
+            Set c1 = .Shapes.AddConnector(msoConnectorElbow, 200, 200, 100, 100)
+            c1.ConnectorFormat.BeginConnect .Shapes("Label" & i), 1
+            c1.ConnectorFormat.EndConnect .Shapes("ComboBox1"), 4
+            Set c1 = .Shapes.AddConnector(msoConnectorElbow, 200, 200, 100, 100)
+            c1.ConnectorFormat.BeginConnect .Shapes("Label" & i), 2
+            c1.ConnectorFormat.EndConnect .Shapes("CommandButton3"), 4
+        ElseIf i = 2 Then
+            Set c1 = .Shapes.AddConnector(msoConnectorStraight, 200, 200, 100, 100)
+            c1.ConnectorFormat.BeginConnect .Shapes("Label" & i), 3
+            c1.ConnectorFormat.EndConnect .Shapes("Label" & i + 1), 1
+        ElseIf i = 3 Then
+            Set c1 = .Shapes.AddConnector(msoConnectorElbow, 200, 200, 100, 100)
+            c1.ConnectorFormat.BeginConnect .Shapes("Label" & i), 2
+            c1.ConnectorFormat.EndConnect .Shapes("CommandButton4"), 4
+        ElseIf i = 4 Then
+            Set c1 = .Shapes.AddConnector(msoConnectorStraight, 200, 200, 100, 100)
+            c1.ConnectorFormat.BeginConnect .Shapes("CommandButton4"), 3
+            c1.ConnectorFormat.EndConnect .Shapes("Label" & i), 1
+        ElseIf i = 5 Then
+            Set c1 = .Shapes.AddConnector(msoConnectorElbow, 200, 200, 100, 100)
+            c1.ConnectorFormat.BeginConnect .Shapes("Label" & i), 2
+            c1.ConnectorFormat.EndConnect .Shapes("CommandButton2"), 2
+        End If
+        
+    Next
+
+    'wszystkie kształty mają być ruchome
+    For Each Object In .Shapes
+        Object.Placement = xlMove
+    Next
+
+
+End With
+
+'wywołanie procedury formatowania strzałek
+Call strzałki(SK)
+
+End Sub
+
+
+
+Sub karta_raport()
+
+Set SR = ActiveWorkbook.Worksheets(SRn)
+
+With SR
+
+    SR.Range("C2").Value = "Po kliknięciu przycisku w wybranej komórce pojawi się raport posiadanych środków we wszystkich giełdach"
+    SR.Range("C3").Value = "Do raportu będziesz mógł dopisać posiadane wolne środki w każdym z tych miejsc."
+    SR.Range("C4").Value = "Da Ci to globalny podgląd na stan Twoich finansów"
+    
+    For i = 1 To 1
+        .OLEObjects("CommandButton" & i).Object.Caption = "Raportuj stan pozycji i wolnych środków"
+        .OLEObjects("CommandButton" & i).Object.BackColor = Kolor_jasnożółty
+        .OLEObjects("CommandButton" & i).Object.ForeColor = Kolor_zielony
+        .OLEObjects("CommandButton" & i).Object.Font.Bold = True
+        .OLEObjects("CommandButton" & i).Width = Range("G6").Left - Range("D6").Left
+        .OLEObjects("CommandButton" & i).Height = Range("F9").Top - Range("D6").Top
+        .OLEObjects("CommandButton" & i).Top = Range("D6").Top
+        .OLEObjects("CommandButton" & i).Left = Range("D6").Left
+        .OLEObjects("CommandButton" & i).Visible = Switch(i = 1, True, i = 2, True, i = 3, True, i = 4, True, i = 5, True, i = 6, False, i = 7, False, i = 8, False, i = 9, False)
+        .OLEObjects("CommandButton" & i).Object.WordWrap = True
+        .Shapes("CommandButton" & i).Placement = xlFreeFloating
+    Next
+    
+End With
+
+End Sub
+
+Sub karta_dane()
+
+Set SD = ActiveWorkbook.Worksheets(SDn)
+
+'wstawianie treści do komórek
+With SD
+    .Range("A1").Value = "btc-bitcoin"
+    .Range("B1").Formula = "=ISNUMBER(SEARCH(" & SKn & "!$F$2,A1))"
+    .Range("C1").Formula = "=IF(B1,COUNTIF($B$1:B1,TRUE()),"""")"
+    .Range("D1").Formula = "=IFERROR(INDEX(A:A,MATCH(ROWS($A$1:A1),C:C,0)),"""")"
+    .Range("E1").Formula = "=" & SDn & "!F2"
+    .Range("H1").Value = "Data"
+    .Range("I1").Value = "Pozycje otwarte"
+    .Range("J1").Value = "Pozycje zmknięte"
+    .Range("K1").Value = "Suma w USD"
+    .Columns("A:K").AutoFit
+End With
+
+End Sub
+
+Sub kreator_kształtów_transakcje()
+
+Set ST = ActiveWorkbook.Worksheets(STn)
+
+With ST
+    
+    'CheckBoxy
+    For i = 1 To 2
+        Set b2 = .OLEObjects.Add(ClassType:="Forms.CheckBox.1", Link:=False, DisplayAsIcon:=False, Left:=200, Top:=100, Width:=10, Height:=10)
+    Next
+    
+    'CommandButtony
+    For i = 1 To 9
+        Set b2 = .OLEObjects.Add(ClassType:="Forms.CommandButton.1", Link:=False, DisplayAsIcon:=False, Left:=200, Top:=100, Width:=10, Height:=10)
+    Next
+    
+    'Labele
+    For i = 1 To 9
+        Set b2 = .OLEObjects.Add(ClassType:="Forms.Label.1", Link:=False, DisplayAsIcon:=False, Left:=200, Top:=100, Width:=10, Height:=10)
+    Next
+        
+End With
+
+End Sub
+
+Sub kreator_instrukcji_transakcje()
+
+'ustalanie tekstów instrukcji do Labeli
+Dim X(1 To 9) As String
+X(1) = "Tutaj dodajesz nową pozycję"
+X(2) = "Tutaj usuwasz wybraną transakcję"
+X(3) = "Tutaj odświeżysz ceny swoich coinów"
+X(4) = "Sprzedając część pozycji podziel ją w arkuszu:" & vbCr & "- uzupełnij wolumen sprzedaży waluty bazowej" & vbCr & "- aktywuj komórkę wiersza z wybraną pozycją" & vbCr & "- kliknij przycisk " & Chr(34) & "Podziel pozycję" & Chr(34) & ""
+X(5) = "Gdy na skutek używania estetyka tabelki ucierpi, zawsze możesz ją poprawić"
+X(6) = "Możesz schować zamknięte już pozycje, aby nie było zbytniego bałaganu"
+X(7) = "Jeśli już wszystko wiesz, możesz usunąć stąd instrukcję oraz wiadomości powitalne. Ale najpierw obejrzyj resztę kart :)"
+X(8) = "Gdy zamkniesz pozycję, koniecznie uzupełnij datę. Ma ona wpływ na formuły w kolejnych kolumnach"
+X(9) = "Pusto tu... kliknij, aby wygenerować przykładowy zestaw danych do przetestowania możliwości arkusza"
+
+Set ST = ActiveWorkbook.Worksheets(STn)
+
+'parametry rozmieszczenia
+T = 370
+L1 = 80
+L2 = 150
+L3 = 230
+L4 = 300
+L5 = 380
+w = 150
+o = 8
+dh = -300
+ 
+With ST
+    
+    'usuwanie starych strzałek
+    For i = .Shapes.Count To 1 Step -1
+        If .Shapes.Item(i).Connector Then .Shapes.Item(i).Delete
+    Next
+    
+    'współrzędne strzałki prostej
+    x0 = .Range("J3").Left
+    x1 = x0 + .Range("J3").Width / 2
+    y2 = .Range("J3").Top
+    
+    'konfiguracja etykiet i strzałek
+    For i = 1 To 9
+
+    
+        'etykiety
+        .OLEObjects("Label" & i).Object.AutoSize = False
+        .OLEObjects("Label" & i).Object.BorderStyle = 1
+        .OLEObjects("Label" & i).Object.BorderColor = Kolor_zielony
+        .OLEObjects("Label" & i).Object.BackColor = Kolor_jasnożółty
+        .OLEObjects("Label" & i).Object.ForeColor = Kolor_zielony
+        .OLEObjects("Label" & i).Object.Font.Bold = True
+        .OLEObjects("Label" & i).Height = Switch(i = 1, 15, i = 2, 15, i = 3, 15, i = 4, 60, i = 5, 30, i = 6, 30, i = 7, 45, i = 8, 30, i = 9, 90)
+        .OLEObjects("Label" & i).Width = Switch(i = 1, 140, i = 2, 170, i = 3, 180, i = 4, 225, i = 5, 190, i = 6, 150, i = 7, 210, i = 8, 240, i = 9, 120)
+        .OLEObjects("Label" & i).Left = Switch(i = 1, L1, i = 2, L1, i = 3, L1, i = 4, L2, i = 5, L3, i = 6, L4, i = 7, L5, i = 8, x1 - 0.5 * .OLEObjects("Label" & i).Width, i = 9, 700)
+        .OLEObjects("Label" & i).Object.Caption = X(i)
+        T = T - .OLEObjects("Label" & i).Height - o
+        .OLEObjects("Label" & i).Top = T
+        T = .OLEObjects("Label" & i).Top
+        
+        'strzałki
+        If i < 3 Then
+            Set c1 = .Shapes.AddConnector(msoConnectorElbow, 200, 200, 100, 100)
+            c1.ConnectorFormat.BeginConnect .Shapes("Label" & i), 2
+            c1.ConnectorFormat.EndConnect .Shapes("CommandButton" & i), 3
+        ElseIf i < 8 Then
+            'Set c1 = .Shapes.AddConnector(msoConnectorElbow, 200, 200, 100, 100)
+            'c1.ConnectorFormat.BeginConnect .Shapes("Label" & i), 2
+            'c1.ConnectorFormat.EndConnect .Shapes("CheckBox1"), 3
+            
+            dh = dh + .OLEObjects("Label" & i).Height + o
+            x_1 = .OLEObjects("Label" & i).Left + 45 'lewy
+            y_1 = .OLEObjects("Label" & i).Top 'góra
+            y_2 = y_1 + dh ' + .OLEObjects("Label" & i).Height
+            If i = 3 Then x_1 = .OLEObjects("Label" & i).Left + 25 'lewy
+            If i = 7 Then x_1 = .OLEObjects("Label" & i).Left + 80 'lewy
+            Set c1 = .Shapes.AddConnector(msoConnectorStraight, x_1, y_1, x_1, y_2)
+            
+        'ElseIf i = 7 Then
+            'Set c1 = .Shapes.AddConnector(msoConnectorElbow, 200, 200, 100, 100)
+            'c1.ConnectorFormat.BeginConnect .Shapes("Label" & i), 1
+            'c1.ConnectorFormat.EndConnect .Shapes("CheckBox2"), 3
+            
+
+        ElseIf i = 8 Then
+            .OLEObjects("Label" & i).Top = T * 4.5
+            Set c1 = .Shapes.AddConnector(msoConnectorStraight, x1, T * 4.5, x1, y2)
+        ElseIf i = 9 Then 'ustawienia indywidualne etykiety 9
+            .OLEObjects("Label" & i).Top = 150
+            L = 30
+            x1 = .OLEObjects("Label" & i).Left - L 'lewy
+            x2 = .OLEObjects("Label" & i).Left + .OLEObjects("Label" & i).Width + L 'prawy
+            x3 = .OLEObjects("Label" & i).Left + .OLEObjects("Label" & i).Width * 0.5 'środek
+            y1 = .OLEObjects("Label" & i).Top - L 'góra
+            y2 = .OLEObjects("Label" & i).Top + .OLEObjects("Label" & i).Height + L 'dół
+            y3 = .OLEObjects("Label" & i).Top + .OLEObjects("Label" & i).Height * 0.5 'środek
+            
+            Set c1 = .Shapes.AddConnector(msoConnectorStraight, 0, 0, x3, y1) 'góra
+            c1.ConnectorFormat.BeginConnect .Shapes("Label" & i), 1
+            Set c2 = .Shapes.AddConnector(msoConnectorStraight, 0, 0, x1, y3) 'lewa
+            c2.ConnectorFormat.BeginConnect .Shapes("Label" & i), 2
+            Set c3 = .Shapes.AddConnector(msoConnectorStraight, 0, 0, x3, y2)  'dół
+            c3.ConnectorFormat.BeginConnect .Shapes("Label" & i), 3
+            Set c4 = .Shapes.AddConnector(msoConnectorStraight, 0, 0, x2, y3) 'prawa
+            c4.ConnectorFormat.BeginConnect .Shapes("Label" & i), 4
+        End If
+
+        
+        
+    Next
+
+    'wszystkie kształty mają być nieruchome
+    For Each Object In .Shapes
+        Object.Placement = xlFreeFloating
+    Next
+
+End With
+
+'wywołanie procedury formatowania strzałek
+Call strzałki(ST)
+
+End Sub
+
+Sub kreator_kształtów_kursy()
+
+Set SK = ActiveWorkbook.Worksheets(SKn)
+
+With SK
+    
+    'kursy
+    For i = 1 To 4
+        Set b1 = .OLEObjects.Add(ClassType:="Forms.CommandButton.1", Link:=False, DisplayAsIcon:=False, Left:=200, Top:=100, Width:=10, Height:=10)
+    Next
+    Set b2 = .OLEObjects.Add(ClassType:="Forms.ComboBox.1", Link:=False, DisplayAsIcon:=False, Left:=200, Top:=100, Width:=10, Height:=10)
+    Set b2 = .OLEObjects.Add(ClassType:="Forms.CheckBox.1", Link:=False, DisplayAsIcon:=False, Left:=200, Top:=100, Width:=10, Height:=10)
+    
+    'etykiety
+    For i = 1 To 5
+        Set b2 = .OLEObjects.Add(ClassType:="Forms.Label.1", Link:=False, DisplayAsIcon:=False, Left:=200, Top:=100, Width:=10, Height:=10)
+    Next
+
+End With
+
+
+End Sub
+
+
+Sub kreator_kształtów_raport()
+
+Set SR = ActiveWorkbook.Worksheets(SRn)
+
+With SR
+    
+    'Buttons
+    Set b1 = .Buttons.Add(100, 100, 10, 10)
+    
+End With
+
+End Sub
+
+
+Sub strzałki(sht As Worksheet)
+
+With sht
+    'ustawianie widoczności strzałek
+    For i = .Shapes.Count To 1 Step -1
+        With .Shapes.Item(i)
+            If .Connector Then
+                
+
+                
+                .Visible = True
+                .ZOrder msoBringToFront
+                With .Line
+
+                    .Weight = 3
+                    .ForeColor.ObjectThemeColor = msoThemeColorAccent2
+                    .ForeColor.TintAndShade = 0
+                    .ForeColor.Brightness = -0.25
+                    .ForeColor.RGB = RGB(251, 234, 13)
+                    .Transparency = 0
+                    'grot
+                    .EndArrowheadStyle = msoArrowheadTriangle
+                    .EndArrowheadWidth = msoArrowheadWidthMedium
+                    .EndArrowheadLength = msoArrowheadLengthMedium
+                End With
+                
+                With .Glow
+                    .Color.RGB = RGB(146, 208, 80)
+                    .Transparency = 0.2
+                    .Radius = 7
+                End With
+                
+                '.Placement = xlFreeFloating
+                '.Delete
+            End If
+        End With
+    Next
+End With
+    
+
+    
+    
+End Sub
+
+Sub dane_do_importu()
+'Miejsce transakcji
+'Waluta pozycji
+'Waluta bazowa
+'Wolumen pozycji
+'Wolumen waluty bazowej
+'Data otwarcia
+'Data zamknięcia
+End Sub
+
+
+
+'==============================================================
+'=====================   kreatory kodów   =====================
+'==============================================================
+Sub kreator_kodu_sht_kursy()
+
+Set sht = ActiveWorkbook.Worksheets(SKn)
+
+'CommandButtons 1-4 Click
+With ThisWorkbook.VBProject.VBComponents(sht.CodeName).CodeModule
+    .InsertLines .CountOfLines + 1, _
+    "Dim b As Boolean" & Chr(10) & Chr(10) & _
+    "Private Sub CommandButton1_Click()" & Chr(10) & _
+    "Call Odśwież_wszystkie_ceny" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10) & _
+    "Private Sub CommandButton2_Click()" & Chr(10) & _
+    "Call Odśwież_wybrane_ceny" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10) & _
+    "Private Sub CommandButton3_Click()" & Chr(10) & _
+    "Call Dodaj_walutę" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10) & _
+    "Private Sub CommandButton4_Click()" & Chr(10) & _
+    "Call Pobierz_nowe_dane" & Chr(10) & _
+    "End Sub" & Chr(10)
+End With
+
+'Label1_Click, CheckBox1_Click, ComboBox1_KeyPress,ComboBox1_change
+With ThisWorkbook.VBProject.VBComponents(sht.CodeName).CodeModule
+    .InsertLines .CountOfLines + 1, _
+    "Private Sub Label1_Click()" & Chr(10) & _
+    "ThisWorkbook.FollowHyperlink " & Chr(34) & "https://coinpaprika.com" & Chr(34) & "" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10) & _
+    "Private Sub CheckBox1_Click()" & Chr(10) & _
+    "Call Instrukcja" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10) & _
+    "Private Sub ComboBox1_KeyPress(ByVal KeyAscii As MSForms.ReturnInteger)" & Chr(10) & _
+    "    b = True" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10) & _
+    "Private Sub ComboBox1_change()" & Chr(10) & _
+    "    If b = True Then" & Chr(10) & _
+    "        ComboBox1.ListFillRange = " & Chr(34) & "Lista_filtrowana1" & Chr(34) & "" & Chr(10) & _
+    "        ComboBox1.DropDown" & Chr(10) & _
+    "    End If" & Chr(10) & _
+    "    b = False" & Chr(10) & _
+    "End Sub" & Chr(10)
+End With
+
+End Sub
+
+Sub kreator_kodu_sht_transakcje()
+Set sht = ActiveWorkbook.Worksheets(STn)
+
+'CommandButtons 1-5 Click
+With ThisWorkbook.VBProject.VBComponents(sht.CodeName).CodeModule
+    .InsertLines .CountOfLines + 1, _
+    "Private Sub CommandButton1_Click()" & Chr(10) & _
+    "Call Wstaw" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10) & _
+    "Private Sub CommandButton2_Click()" & Chr(10) & _
+    "Call Usuń" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10) & _
+    "Private Sub CommandButton3_Click()" & Chr(10) & _
+    "Call Odśwież_wszystkie_ceny" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10) & _
+    "Private Sub CommandButton4_Click()" & Chr(10) & _
+    "Call Podziel_pozycję" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10) & _
+    "Private Sub CommandButton5_Click()" & Chr(10) & _
+    "Call Popraw_wygląd" & Chr(10) & _
+    "End Sub" & Chr(10)
+End With
+
+'CommandButton 6
+With ThisWorkbook.VBProject.VBComponents(sht.CodeName).CodeModule
+    .InsertLines .CountOfLines + 1, _
+"Private Sub CommandButton6_Click()" & Chr(10) & _
+"'Poznaj mnie!" & Chr(10) & _
+"" & Chr(10) & _
+"Dim Resp As VbMsgBoxResult" & Chr(10) & _
+"" & Chr(10) & _
+"Resp = MsgBox(" & Chr(34) & "Zapraszam do odwiedzenia moich stron:" & Chr(34) & " & vbCr _" & Chr(10) & _
+"            & vbCr & " & Chr(34) & "https://www.excel.wojda.tech/" & Chr(34) & " _" & Chr(10) & _
+"            & vbCr & " & Chr(34) & "https://www.autocad.wojda.tech/" & Chr(34) & " _" & Chr(10) & _
+"            & vbCr & " & Chr(34) & "https://www.maciej.wojda.tech/" & Chr(34) & " _" & Chr(10) & _
+"            & vbCr & vbCr & " & Chr(34) & "Czy chcesz otworzyć teraz?" & Chr(34) & ", vbInformation + vbYesNo, " & Chr(34) & "Kryptoreklama" & Chr(34) & ")" & Chr(10) & _
+"" & Chr(10) & _
+"If Resp = vbYes Then" & Chr(10) & _
+"    ThisWorkbook.FollowHyperlink " & Chr(34) & "https://www.excel.wojda.tech/" & Chr(34) & "" & Chr(10) & _
+"    ThisWorkbook.FollowHyperlink " & Chr(34) & "https://www.autocad.wojda.tech/" & Chr(34) & "" & Chr(10) & _
+"    ThisWorkbook.FollowHyperlink " & Chr(34) & "https://www.maciej.wojda.tech/" & Chr(34) & "" & Chr(10) & _
+"End If" & Chr(10) & _
+"" & Chr(10) & _
+"End Sub" & Chr(10)
+End With
+
+'CommandButtons 7-9
+With ThisWorkbook.VBProject.VBComponents(sht.CodeName).CodeModule
+    .InsertLines .CountOfLines + 1, _
+"Private Sub CommandButton7_Click()" & Chr(10) & _
+"'$ wesprzyj $" & Chr(10) & _
+"UF_wesprzyj.Show" & Chr(10) & _
+"End Sub" & Chr(10) & _
+"" & Chr(10) & _
+"Private Sub CommandButton8_Click()" & Chr(10) & _
+"'Reflinki" & Chr(10) & _
+"UF_Reflinki.Show" & Chr(10) & _
+"End Sub" & Chr(10) & _
+"" & Chr(10) & _
+"Private Sub CommandButton9_Click()" & Chr(10) & _
+"'Zostań bohaterem!" & Chr(10) & _
+"MsgBox " & Chr(34) & "Zostań bohaterem i wspomóż dzielną wojowniczkę Łucję Grzegorczyk" & Chr(34) & " & vbCr & " & Chr(34) & "w jej straszliwej walce z przeciwnościami losu!" & Chr(34) & ", , " & Chr(34) & "Zostań bohaterem!" & Chr(34) & "" & Chr(10) & _
+"ThisWorkbook.FollowHyperlink " & Chr(34) & "https://www.facebook.com/dlalusi/" & Chr(34) & "" & Chr(10) & _
+"ThisWorkbook.FollowHyperlink " & Chr(34) & "https://dzieciom.pl/podopieczni/24203" & Chr(34) & "" & Chr(10) & _
+"UF_Bohater.Show" & Chr(10) & _
+"End Sub" & Chr(10)
+End With
+
+'CheckBox1_Click, CheckBox2_Click
+With ThisWorkbook.VBProject.VBComponents(sht.CodeName).CodeModule
+    .InsertLines .CountOfLines + 1, _
+    "Private Sub CheckBox1_Click()" & Chr(10) & _
+    "'Pozycje zamknięte" & Chr(10) & _
+    "" & Chr(10) & _
+    "If CheckBox1 = False Then" & Chr(10) & _
+    "    ActiveSheet.Cells(R, C).AutoFilter Field:=9, Criteria1:=" & Chr(34) & "=" & Chr(34) & "" & Chr(10) & _
+    "    Cells(R, C + 1).Select" & Chr(10) & _
+    "Else" & Chr(10) & _
+    "    ActiveSheet.Cells(R, C).AutoFilter Field:=9" & Chr(10) & _
+    "    Cells(R, C + 1).Select" & Chr(10) & _
+    "End If" & Chr(10) & _
+    "" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10) & _
+    "Private Sub CheckBox2_Click()" & Chr(10) & _
+    "'Instrukcja" & Chr(10) & _
+    "" & Chr(10) & _
+    "Call Instrukcja" & Chr(10) & _
+    "" & Chr(10) & _
+    "End Sub" & Chr(10) & _
+    "" & Chr(10)
+End With
+
+
+'Label9 czyli kreowanie przykładowych transakcji
+With ThisWorkbook.VBProject.VBComponents(sht.CodeName).CodeModule
+    .InsertLines .CountOfLines + 1, _
+"Private Sub Label9_Click()" & Chr(10) & _
+"If Cells(R, C).Value = " & Chr(34) & "" & Chr(34) & " Then" & Chr(10) & _
+"    Label9.Caption = " & Chr(34) & "Kliknij, aby wyczyścić tabelę z przykładowych danych" & Chr(34) & "" & Chr(10) & _
+"    Call Wstaw_Przykładowe_dane" & Chr(10) & _
+"Else" & Chr(10) & _
+"    Label9.Caption = " & Chr(34) & "Pusto tu... kliknij, aby wygenerować przykładowy zestaw danych do przetestowania możliwości arkusza" & Chr(34) & "" & Chr(10) & _
+"    Call Wyczyść_Przykładowe_dane" & Chr(10) & _
+"End If" & Chr(10) & _
+"End Sub" & Chr(10)
+End With
+
+End Sub
+
+
+
+Sub generator_kreatorów_kodu()
+'czyli pobierasz kod z VBE, wklejasz do komórek, zaznaczasz zakres, odpalasz makro i z miejsca w które się wkleiła kopiujesz komendę do tworzenia komendy
+
+Dim s As String
+s = "sub test4()" & vbCr & vbCr & "Set Sht = ActiveWorkbook.Worksheets(STn)" & vbCr & vbCr
+s = s & "With ThisWorkbook.VBProject.VBComponents(Sht.CodeName).CodeModule" & Chr(10)
+s = s & "    .InsertLines .CountOfLines + 1, _ " & Chr(10)
+
+Set SD = ActiveWorkbook.Worksheets(SDn)
+
+For Each kom In Selection
+    s = s & Chr(34) & Replace(kom.Value, """", """" & " & Chr(34) & " & """") & Chr(34) & " & chr(10) & _" & Chr(10)
+Next
+
+s = Left(s, Len(s) - 4) & vbCr & "End with" & vbCr & vbCr & "End Sub"
+
+With ThisWorkbook.VBProject.VBComponents("Ten_skoroszyt").CodeModule
+    .InsertLines .CountOfLines + 1, s
+End With
+
+End Sub
